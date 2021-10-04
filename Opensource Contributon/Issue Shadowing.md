@@ -20,7 +20,7 @@ API profile code 샘플페이지 Java section이 빠져있다.
 
 ## 예상 난이도
 
-하
+**하**
 
 # Issue #24287
 
