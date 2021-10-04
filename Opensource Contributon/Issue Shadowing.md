@@ -18,7 +18,7 @@ API profile code 샘플페이지 Java section이 빠져있다.
 
 다른 언어들이 설명하고 있는 것들을 참고해서 어떤식으로 설명하면 좋을지 comment를 달아서 시작해도 좋을 것 같다.
 
-## 난이도
+## 예상 난이도
 
 하
 
@@ -97,8 +97,87 @@ private void updateResponseHeader(RxDocumentServiceRequest request, Map<String, 
 
 ### 해결책
 
-### 난이도
+## 예상 난이도
 
 **상**
 
-# Ref
+# Issue #23844
+
+## Event Hubs Sample에서 issues
+
+[Event Hubs Sample issue · Issue #23844 · Azure/azure-sdk-for-java](https://github.com/Azure/azure-sdk-for-java/issues/23844)
+
+### 1번 이슈 발생 위치
+
+[Link1](https://github.com/Azure/azure-sdk-for-java/blob/main/sdk/eventhubs/azure-messaging-eventhubs/src/samples/java/com/azure/messaging/eventhubs/ConsumeEvents.java#L98), [Link2](https://github.com/Azure/azure-sdk-for-java/blob/main/sdk/eventhubs/azure-messaging-eventhubs/src/samples/java/com/azure/messaging/eventhubs/ConsumeEventsFromKnownSequenceNumberPosition.java#L82), [Link3](https://github.com/Azure/azure-sdk-for-java/blob/main/sdk/eventhubs/azure-messaging-eventhubs/src/samples/java/com/azure/messaging/eventhubs/PublishEventsCustomEndpoint.java#L53)
+
+```java
+// Link1 코드
+// We create 10 events to send to the service and block until the send has completed.
+Flux.range(0, NUMBER_OF_EVENTS).flatMap(number -> {
+    String body = String.format("Hello world! Number: %s", number);
+		**// 이슈 발생 위치-->**
+    **return producer.send(new EventData(body.getBytes(UTF_8)), sendOptions);**
+}).blockLast(OPERATION_TIMEOUT);
+```
+
+### 원인
+
+`Iterable<com.azure.messaging.eventhubs.EventData>`타입을 요구되지만 `EventData`타입이 반환되고 있음
+
+### 해결책
+
+`Collections.singletonList(new EventData(body.getBytes(UTF_8))`로 변경할 것을 제안
+
+### 2번 이슈 발생 위치
+
+[Link](https://github.com/Azure/azure-sdk-for-java/blob/main/sdk/eventhubs/azure-messaging-eventhubs/src/samples/java/com/azure/messaging/eventhubs/EventHubsJavaDocCodeSamples.java#L634)
+
+```java
+// Link 코드
+EventProcessorClient eventProcessorClient = new EventProcessorClientBuilder()
+            .connectionString(connectionString)
+            .processEvent(eventContext -> {
+                System.out.printf("Partition id = %s and sequence number of event = %s%n",
+                    eventContext.getPartitionContext().getPartitionId(),
+                    eventContext.getEventData().getSequenceNumber());
+            })
+            .processError(errorContext -> {
+                System.out.printf("Error occurred in partition processor for partition %s, %s%n",
+                    errorContext.getPartitionContext().getPartitionId(),
+                    errorContext.getThrowable());
+            })
+            .consumerGroup("consumer-group")
+            .buildEventProcessorClient();
+```
+
+### 원인
+
+java.lang.NullPointerException: 'checkpointStore'은 null이 될 수 없음
+
+### 해결책
+
+`.checkpointStore(new SampleCheckpointStore())`처럼 `파라미터 추가`
+
+```java
+// 변경된 코드
+EventProcessorClient eventProcessorClient = new EventProcessorClientBuilder()
+    .connectionString(connectionString)
+    .processEvent(eventContext -> {
+        System.out.printf("Partition id = %s and sequence number of event = %s%n",
+            eventContext.getPartitionContext().getPartitionId(),
+            eventContext.getEventData().getSequenceNumber());
+	})
+        .processError(errorContext -> {
+            System.out.printf("Error occurred in partition processor for partition %s, %s%n",
+                errorContext.getPartitionContext().getPartitionId(),
+                errorContext.getThrowable());
+        })
+        .consumerGroup("consumer-group")
+        **.checkpointStore(new SampleCheckpointStore())**
+        .buildEventProcessorClient();
+```
+
+## 예상 난이도
+
+**중하**
