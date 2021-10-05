@@ -24,6 +24,10 @@ API profile code 샘플페이지 Java section이 빠져있다.
 
 # Issue #24287
 
+## Cosmos DB StoreClient updateResponseHeader 버그
+
+[[BUG] Cosmos DB StoreClient updateResponseHeader · Issue #24287 · Azure/azure-sdk-for-java](https://github.com/Azure/azure-sdk-for-java/issues/24287)
+
 ### Describe the bug
 
 Store Client에서 partition key range id를 지우고 있다. (.Net SDK에서는 볼 수 없다.)
