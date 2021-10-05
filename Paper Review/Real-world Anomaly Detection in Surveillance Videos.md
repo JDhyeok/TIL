@@ -54,14 +54,30 @@ positive, negative bags을 가지고, deep MIL ranknig  anomaly detection 모델
 일반적인 supervised learning에서 optimization function과 loss function은 다음과 같다.
 
 - Optimization function
-  $$min[{1\over k}\Sigma^{k}_{i=1} max(0, 1 - y_i(w.\phi(x) - b))] + {1 \over 2} ||w||^2$$
 
-- loss function
-  $$max(0, 1 - y_i(w.\phi(x) - b))$$
+  <img src="./images/optimization_function.PNG">
+
+- Loss function(hinge loss)
+
+  <img src="./images/mil_loss.PNG">
+
+  -  **0** or **1 - (normal 중에 가장 anomal 점수가 큰 instance - anomal 중에 가장 anomal 점수가 큰 instance)** => loss가 작아진다 = anomal instance의 점수를 높히고, nomal 중에 점수가 큰 instance의 점수를 낮춘다.
 
 
+- 기존 loss function의 한계점
+  1. real-world에서는 anomaly가 발생하는 moment가 매우 드물기 때문에 적은 segment 안에 sparse하게 anomaly가 있다.
+
+  2. video는 sequence이기 때문에, 인접한 video segment간에 점수 차이를 smooth 하게 변화하도록 해야한다.
 
 ### 3.2 Deep MIL Ranking Model
+기존 loss function에 다음과 같은 제약조건을 포함했다.
+
+<img src="./images/deep_mil_loss.PNG">
+
+ 1. temporal smoothness : 인접한 segment간의 차이의 제곱을 제약조건으로 두어 인접한 segment간의 점수차이를 좁힌다.
+
+ 2. sparsity : anomaly 점수의 합을 제약조건으로 두어 anomaly의 희소성을 완화시킨다.
+
 
 ## 4. Dataset
 
